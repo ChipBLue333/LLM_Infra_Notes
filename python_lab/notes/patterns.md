@@ -162,3 +162,71 @@ def has_path(root, target):
     remaining = target - root.val
     return has_path(root.left, remaining) or has_path(root.right, remaining)
 ```
+
+## 2026年5月12日: 回溯算法 (Backtracking) 核心模式
+
+### 1. 隐式回溯 vs 显式回溯
+- **隐式回溯**: `backtrack(path + [val])`
+  - 依靠 Python 列表 `+` 产生全新对象传入下一层。
+  - 优点：代码极简，无需手动 `pop` 和 `copy()`，不易出错。
+  - 缺点：每次生成新列表，空间与时间开销较大。
+- **显式回溯**: `path.append(val); backtrack(); path.pop()`
+  - 依靠全局或闭包内唯一的列表对象维护状态。
+  - 优点：极致的性能，省去不必要的内存分配。
+  - 缺点：保存结果时必须深拷贝 `result.append(path.copy())`，且容易遗忘 `pop`。
+
+### 2. 回溯中的去重 (Deduplication)
+- **前提**: 遇到去重问题，第一步永远是 **排序 `nums.sort()`**。
+- **组合去重 (Combination Sum II)**: 
+  - `if i > start and candidates[i] == candidates[i - 1]: continue`
+  - 只在“层级”上去重，放行“深度”上的重复元素。
+- **排列去重 (Permutations II)**:
+  - `if i > 0 and nums[i] == nums[i - 1] and not used[i - 1]: continue`
+  - 利用 `used` 数组或判断树状结构状态，区分同树枝的重复和同树层的重复。
+
+## 2026年5月15日: 二维网格 DFS / 回溯
+
+### 适用场景
+
+当题目给出二维矩阵 / 网格，并要求从某个格子出发向上下左右搜索，例如 Word Search。
+
+### 核心思想
+
+- 递归状态通常包含当前位置和当前进度：`dfs(i, j, k)`。
+- `i, j` 表示当前所在格子。
+- `k` 表示当前要匹配目标字符串或目标路径的第几个元素。
+- 每次进入一个格子前，先判断越界、重复访问、当前字符是否匹配。
+- 如果当前格子合法，就标记访问，然后向四个方向递归。
+- 递归结束后恢复访问状态。
+
+### 代码骨架
+
+```python
+def dfs(i, j, k):
+    if i < 0 or i >= m or j < 0 or j >= n:
+        return False
+    if board[i][j] != word[k]:
+        return False
+    if k == len(word) - 1:
+        return True
+
+    temp = board[i][j]
+    board[i][j] = "#"
+
+    found = (
+        dfs(i + 1, j, k + 1)
+        or dfs(i - 1, j, k + 1)
+        or dfs(i, j + 1, k + 1)
+        or dfs(i, j - 1, k + 1)
+    )
+
+    board[i][j] = temp
+    return found
+```
+
+### 易错点
+
+- 忘记恢复 `board[i][j]`，导致其他路径被错误影响。
+- 只从一个起点开始搜索，忘记外层双循环枚举所有起点。
+- 把“同一条路径不能重复访问”和“所有路径都不能重复访问”混淆。
+- 终止条件放错位置：匹配完最后一个字符后应直接返回成功。
