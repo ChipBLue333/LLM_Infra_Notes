@@ -703,3 +703,522 @@ for j in range(n):
 - 只判断 `s[i] == s[j]`，忘记中间区间也必须是回文。
 - 忘记长度 1、2、3 的基础情况。
 - 不理解为什么 `i` 要倒序：本质是为了先算依赖项，不是模板要求。
+
+
+## 模式 8：跳跃游戏 - 覆盖范围贪心 (Jump Game Greedy Coverage)
+
+**适用场景**：
+数组中每个位置表示可以向前扩展的最大距离，题目要求判断能否到达终点，或求到达终点的最少跳跃次数。
+
+### Jump Game I：判断能否到达
+
+核心变量：
+
+```python
+farthest = 0
+```
+
+含义：当前已经能够到达的最远下标。
+
+核心更新：
+
+```python
+if i > farthest:
+    return False
+
+farthest = max(farthest, i + nums[i])
+```
+
+解释：
+- `i + nums[i]` 表示从当前位置出发，最远可以跳到哪里。
+- `max(...)` 表示最远可达范围只能扩大，不能倒退。
+- 如果 `i > farthest`，说明当前位置本身不可达，后续也无法继续推进。
+
+成功条件：
+
+```python
+farthest >= len(nums) - 1
+```
+
+含义：最远可达范围已经覆盖最后一个下标。
+
+### Jump Game II：计算最少跳跃次数
+
+核心变量：
+
+```python
+jumps = 0
+current_end = 0
+farthest = 0
+```
+
+含义：
+- `jumps`：已经跳了几次。
+- `current_end`：当前跳跃次数能够覆盖到的最右边界。
+- `farthest`：在当前覆盖范围内，下一跳能够到达的最远位置。
+
+核心骨架：
+
+```python
+for i in range(len(nums) - 1):
+    farthest = max(farthest, i + nums[i])
+
+    if i == current_end:
+        jumps += 1
+        current_end = farthest
+```
+
+关键点：
+- 不遍历最后一个下标，因为到达终点后不需要再从终点起跳。
+- 只有当 `i == current_end` 时，才说明当前这一层覆盖范围扫描完，需要增加一次跳跃。
+- `current_end = farthest` 表示进入下一跳可以覆盖的新区间。
+
+### 易错点
+
+- 把 `farthest` 直接赋值成 `i + nums[i]`，导致最远范围可能倒退。
+- 在 Jump Game II 中遍历到最后一个下标，导致多计一次跳跃。
+- 每走一步就 `jumps += 1`，把“经过一个下标”和“跳跃一次”混在一起。
+- 没区分 `current_end` 和 `farthest`：前者是当前层边界，后者是下一层最远边界。
+
+
+## 模式 9：贪心 - 全局可行与局部重置 (Global Feasibility + Local Reset)
+
+**适用场景**：
+题目存在一个整体资源约束，同时需要找到一个起点、分界点或候选方案。局部尝试失败后，可以证明一整段候选都不可能成功。
+
+典型题目：
+- Problem 053: Gas Station
+
+### 核心思想
+
+先判断全局是否可行：
+
+```python
+if sum(gas) < sum(cost):
+    return -1
+```
+
+如果全局资源不足，任何局部策略都救不了。
+
+然后从左到右扫描，维护当前候选起点下的局部状态：
+
+```python
+start = 0
+current_gas = 0
+
+for i in range(len(gas)):
+    current_gas += gas[i] - cost[i]
+
+    if current_gas < 0:
+        start = i + 1
+        current_gas = 0
+```
+
+### 为什么这是贪心
+
+当从 `start` 走到 `i` 时出现亏空：
+
+```text
+sum(start..i) < 0
+```
+
+说明 `start` 不可能作为答案。
+
+更重要的是，`start` 到 `i` 中间的所有位置也都不可能作为答案。因为在第一次亏空之前，从 `start` 到中间位置之前的累计值都没有亏空；如果从中间某个位置重新开始，只会少掉前面那段非负收益，走到 `i` 时更不可能不亏。
+
+所以可以直接跳到：
+
+```python
+start = i + 1
+```
+
+这一步“一次性排除一整段候选”，就是贪心决策。
+
+### 易错点
+
+- 误以为这只是普通遍历，忽略了“跳过一整段候选”的证明。
+- 只判断局部油量，不判断总油量，导致总资源不足时仍返回某个起点。
+- `current_gas < 0` 后忘记重置局部油量。
+- 把 `start` 设成 `i`，正确应该是 `i + 1`。
+
+
+## 模式 10：贪心 - 边界闭合切分 (Boundary Closure Partition)
+
+**适用场景**：
+题目要求把序列切成尽可能多的合法片段，而片段内的元素会对片段右边界提出约束。
+
+典型题目：
+- Problem 054: Partition Labels
+
+### 核心思想
+
+先预处理每个元素最后一次出现的位置：
+
+```python
+last = {}
+for i, char in enumerate(s):
+    last[char] = i
+```
+
+再从左到右扫描，维护当前片段必须覆盖到的最远边界：
+
+```python
+start = 0
+end = 0
+parts = []
+
+for i, char in enumerate(s):
+    end = max(end, last[char])
+
+    if i == end:
+        parts.append(end - start + 1)
+        start = i + 1
+```
+
+### 为什么这是贪心
+
+当前片段里出现过的所有字符，都必须被当前片段完整包含。
+
+因此 `end` 表示：
+
+```text
+当前片段内所有字符最后出现位置的最大值
+```
+
+当 `i == end` 时，说明当前片段内的所有字符都已经完整覆盖。如果此时不切，而是继续往后扩展，只会让当前片段变长、片段数量变少，不会带来更优解。
+
+所以边界一闭合就立刻切分。
+
+### 易错点
+
+- 不先记录最后出现位置，导致不知道当前片段必须延伸到哪里。
+- 看到一个重复字符就切分，忽略它后面可能还有更晚的位置。
+- 忘记更新 `start`，导致片段长度计算错误。
+- 把 `end` 理解成当前字符的最后位置，而不是当前片段内所有字符最后位置的最大值。
+
+
+## 2026年5月27日: 贪心 - 区间调度 (Interval Scheduling)
+
+### 适用场景
+
+当题目要求从一组区间中保留尽可能多的互不重叠区间，或删除尽可能少的区间时，可以考虑区间调度贪心。
+
+典型题目：
+- Problem 055: Non-overlapping Intervals
+
+### 核心思想
+
+把“删除最少区间”转换成：
+
+```text
+保留最多的互不重叠区间
+```
+
+为了保留更多区间，每次应优先选择结束位置更早的区间。结束越早，留给后面区间的空间越大。
+
+核心骨架：
+
+```python
+intervals.sort(key=lambda x: x[1])
+
+removed = 0
+prev_end = float("-inf")
+
+for start, end in intervals:
+    if start >= prev_end:
+        prev_end = end
+    else:
+        removed += 1
+
+return removed
+```
+
+### 为什么这是贪心
+
+在所有当前可选区间中，选择结束最早的区间不会让答案变差。因为它占用的右边界最小，给后续区间留下的可用范围最大。
+
+如果当前区间与已保留区间重叠，由于区间已经按结束位置升序排列，已保留区间一定不会比当前区间更晚结束。因此保留已选区间、移除当前区间是安全的。
+
+### 易错点
+
+- 按开始位置排序后直接贪心，容易保留一个很长的区间，挡住后面多个短区间。
+- 把边界相接误判成重叠。本题中 `[1, 2]` 和 `[2, 3]` 不重叠，所以条件是 `start >= prev_end`。
+- 忘记 `list.sort()` 会原地修改输入；如果不能修改原列表，应使用 `sorted(...)`。
+
+
+## 2026年5月29日: 贪心 - 射击点覆盖区间 (Arrow Coverage)
+
+### 适用场景
+
+当题目要求用尽可能少的点、箭、会议室资源或操作次数覆盖一组区间时，可以考虑按结束位置排序，并把当前资源放在当前区间的右边界。
+
+典型题目：
+- Problem 056: Minimum Number of Arrows to Burst Balloons
+
+### 核心思想
+
+按区间结束位置排序：
+
+```python
+points.sort(key=lambda x: x[1])
+```
+
+维护当前箭的位置：
+
+```python
+arrows = 0
+arrow_pos = float("-inf")
+
+for start, end in points:
+    if start > arrow_pos:
+        arrows += 1
+        arrow_pos = end
+
+return arrows
+```
+
+### 为什么这是贪心
+
+当前未被射爆的气球必须用一支箭处理。把箭射在它的结束位置，仍然可以射爆当前气球，同时这个位置在当前气球内部尽可能靠右，更有机会覆盖后面起点更大的气球。
+
+如果后续气球满足：
+
+```text
+start <= arrow_pos
+```
+
+说明它也能被当前箭射爆。
+
+如果：
+
+```text
+start > arrow_pos
+```
+
+说明当前箭已经够不到它，必须新增一支箭。
+
+### 易错点
+
+- 把条件写成 `start >= arrow_pos`，会把边界相接误判为需要新箭。
+- 忘记边界相接时同一支箭可以同时射爆两个气球。
+- 不理解为什么箭放在右边界：不是随便选点，而是在不失去当前气球的前提下尽量靠右。
+
+
+## 2026年5月29日: 区间 - 合并区间 (Merge Intervals)
+
+### 适用场景
+
+当题目要求把所有重叠区间合并成若干个不重叠区间时，通常按起点排序，然后从左到右维护结果列表。
+
+典型题目：
+- Problem 057: Merge Intervals
+
+### 核心思想
+
+按起点排序：
+
+```python
+intervals.sort(key=lambda x: x[0])
+```
+
+维护结果列表：
+
+```python
+merged = []
+
+for start, end in intervals:
+    if not merged or merged[-1][1] < start:
+        merged.append([start, end])
+    else:
+        merged[-1][1] = max(merged[-1][1], end)
+
+return merged
+```
+
+### 为什么按起点排序
+
+按起点排序后，从左到右扫描时，当前区间只需要和 `merged` 的最后一个区间比较。
+
+如果当前区间和最后一个区间不重叠，那么它也不会和更早的区间重叠；因为更早区间的起点更小，并且已经被合并进结果列表。
+
+### 合并判断
+
+不重叠条件：
+
+```text
+last_end < current_start
+```
+
+合并条件：
+
+```text
+current_start <= last_end
+```
+
+本题中边界相接也要合并，所以 `[1, 4]` 和 `[4, 5]` 会合并成 `[1, 5]`。
+
+### 易错点
+
+- 写成嵌套循环，重复扫描所有区间；排序后只需要一次线性遍历。
+- 遍历时删除原列表，容易造成下标混乱。
+- 把边界相接误判成不重叠。
+- 忘记合并时右边界要取最大值，而不是直接覆盖成当前区间的结束位置。
+
+
+## 2026年5月29日: Python 语法 - sort key 与 lambda
+
+### `sort(key=...)`
+
+`list.sort()` 会原地排序原列表。
+
+```python
+points.sort(key=lambda x: x[1])
+```
+
+含义：
+- `points` 是要排序的列表。
+- `key` 指定每个元素用什么值参与比较。
+- `x` 是列表中的每一个元素。
+- `x[1]` 表示取元素的第二项作为排序依据。
+
+### `lambda`
+
+`lambda` 是匿名函数，适合写很短、只用一次的函数。
+
+基本格式：
+
+```python
+lambda 参数: 返回值表达式
+```
+
+例如：
+
+```python
+lambda x: x[1]
+```
+
+等价于：
+
+```python
+def get_second(x):
+    return x[1]
+```
+
+### 常见写法
+
+按区间起点排序：
+
+```python
+intervals.sort(key=lambda x: x[0])
+```
+
+按区间终点排序：
+
+```python
+intervals.sort(key=lambda x: x[1])
+```
+
+如果不想修改原列表，使用 `sorted`：
+
+```python
+sorted_intervals = sorted(intervals, key=lambda x: x[0])
+```
+
+## 2026年5月30日: 区间插入三段式
+
+### 适用场景
+
+当区间列表已经按起点升序排列，且内部无重叠，需要插入一个新区间并合并重叠区间。
+
+### 核心思想
+
+把每个旧区间和 `new_interval` 的关系分成三类：
+
+- 旧区间完全在新区间左边：直接加入结果。
+- 旧区间和新区间重叠：只更新新区间的左右边界。
+- 旧区间完全在新区间右边：先把合并后的新区间加入结果，再加入右侧区间。
+
+因为新区间只能插入一次，需要用状态变量记录它是否已经进入结果。
+
+### 关键判断
+
+```text
+interval_end < new_start      -> 完全在左边
+interval_start > new_end      -> 完全在右边
+否则                          -> 重叠或边界相接
+```
+
+如果题目要求边界相接也合并，那么左边和右边判断必须分别使用 `<` 和 `>`。
+
+### 代码骨架
+
+```python
+result = []
+inserted = False
+
+for interval in intervals:
+    if interval[1] < new_interval[0]:
+        result.append(interval)
+    elif interval[0] > new_interval[1]:
+        if not inserted:
+            result.append(new_interval)
+            inserted = True
+        result.append(interval)
+    else:
+        new_interval[0] = min(new_interval[0], interval[0])
+        new_interval[1] = max(new_interval[1], interval[1])
+
+if not inserted:
+    result.append(new_interval)
+```
+
+## 2026年5月30日: 最小堆管理资源
+
+### 适用场景
+
+当题目需要动态维护“当前最小值”，例如：
+
+- 最早结束的会议室；
+- 最小的任务结束时间；
+- Top K 问题中的候选值；
+- 多路有序列表合并。
+
+### 核心思想
+
+最小堆可以快速拿到当前最小值：
+
+```python
+heap[0]
+```
+
+Python 中使用 `heapq`：
+
+```python
+import heapq
+
+heapq.heappush(heap, value)
+smallest = heapq.heappop(heap)
+```
+
+### Meeting Rooms II 模式
+
+堆里保存会议室当前占用到的结束时间。
+
+```python
+intervals.sort(key=lambda x: x[0])
+rooms = []
+
+for start, end in intervals:
+    if rooms and rooms[0] <= start:
+        heapq.heappop(rooms)
+    heapq.heappush(rooms, end)
+
+return len(rooms)
+```
+
+### 关键点
+
+- 排序负责按时间顺序处理会议。
+- `rooms[0]` 表示最早空出来的会议室。
+- `rooms[0] <= start` 表示当前会议可以复用这个会议室。
+- `heappush` 表示当前会议占用一个会议室直到 `end`。
