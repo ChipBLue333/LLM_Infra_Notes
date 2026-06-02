@@ -1222,3 +1222,72 @@ return len(rooms)
 - `rooms[0]` 表示最早空出来的会议室。
 - `rooms[0] <= start` 表示当前会议可以复用这个会议室。
 - `heappush` 表示当前会议占用一个会议室直到 `end`。
+
+## 2026年6月2日: Top K 最小堆
+
+### 适用场景
+
+当题目要求找：
+
+- 第 `k` 大元素；
+- 前 `k` 大元素；
+- 出现频率最高的 `k` 个元素；
+- 评分最高、距离最近、优先级最高的 `k` 个对象。
+
+只要目标是从大量候选中保留最强的 `k` 个，就可以考虑大小为 `k` 的最小堆。
+
+### 核心思想
+
+用最小堆保存当前见过的 top k 候选。
+
+堆顶 `heap[0]` 表示当前 top k 里最弱的那个元素：
+
+- 找第 `k` 大元素时，堆顶是当前前 `k` 大中的最小值。
+- 找前 `k` 个高频元素时，堆顶是当前 top k 里频率最低的元素。
+
+当新元素强于堆顶时，用新元素替换堆顶；否则忽略。
+
+### 第 K 大元素代码骨架
+
+```python
+import heapq
+
+
+heap = []
+
+for num in nums:
+    if len(heap) < k:
+        heapq.heappush(heap, num)
+    elif num > heap[0]:
+        heapq.heapreplace(heap, num)
+
+return heap[0]
+```
+
+### 前 K 个高频元素代码骨架
+
+```python
+import heapq
+
+
+freq = {}
+for num in nums:
+    freq[num] = freq.get(num, 0) + 1
+
+heap = []
+for num, count in freq.items():
+    if len(heap) < k:
+        heapq.heappush(heap, (count, num))
+    elif count > heap[0][0]:
+        heapq.heapreplace(heap, (count, num))
+
+return [num for count, num in heap]
+```
+
+### 关键点
+
+- Python 的 `heapq` 是最小堆。
+- 堆大小保持为 `k`，空间复杂度是 `O(k)`。
+- 不要把“排序列表”误认为堆；每次 `sort()` 虽然能得到正确顺序，但复杂度更高。
+- 堆中可以保存元组，例如 `(frequency, num)`；Python 会先按第一个元素比较。
+- 返回结果顺序如果题目说不限，就不需要额外排序。

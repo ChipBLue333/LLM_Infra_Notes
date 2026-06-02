@@ -1006,3 +1006,61 @@ def get_end(x):
 下一次建议继续做 1 到 2 道 Heap 入门题，巩固 `heappush`、`heappop` 和 `heap[0]` 的使用，再逐步进入 Top K / K-way merge 类型。
 
 ---
+
+## 2026年6月2日 训练总结
+
+### 今天完成的题目
+
+1. **Problem 060: Kth Largest Element in an Array (数组中的第 K 大元素)**
+   - **类型**: Heap / Array
+   - **收获记录 / 踩坑反思**:
+     - 正确使用最小堆维护当前见过的前 `k` 大元素。
+     - 理解了堆顶语义：堆顶不是当前最大值，而是当前前 `k` 大元素里最小的那个。
+     - 正确使用 `heapq.heapreplace` 在当前数字大于堆顶时替换堆顶。
+     - 能正确处理重复元素、负数、`k == 1`、`k == len(nums)` 等边界情况。
+     - 代码结果正确，复杂度达到 `O(n log k)`。
+
+2. **Problem 061: Top K Frequent Elements (前 K 个高频元素)**
+   - **类型**: Hash Map / Heap / Array
+   - **收获记录 / 踩坑反思**:
+     - 正确用 dict 手写频率统计，没有依赖 `collections.Counter`。
+     - 初版用排序列表模拟堆，结果正确，但没有真正练到 Heap 模式。
+     - 修改后正确使用 `heapq.heappush` 和 `heapq.heapreplace` 维护大小为 `k` 的最小堆。
+     - 明确了本题比较依据不是数字大小，而是出现频率。
+     - 正确把堆元素设计为 `(frequency, num)`，最后返回 `num` 部分。
+
+### 今天新增掌握的模式
+
+- **Top K 最小堆**：
+  - 找第 `k` 大或前 `k` 大时，可以维护大小为 `k` 的最小堆。
+  - 堆顶表示当前保留候选里“最弱”的那个元素。
+  - 新元素只有强于堆顶时，才有资格进入堆。
+
+- **频率表 + Top K 堆**：
+  - 先用 dict 把原始数组转换成 `元素 -> 频率`。
+  - 再按频率把元素放入大小为 `k` 的最小堆。
+  - 堆中保存 `(frequency, num)`，让 Python 的最小堆按频率比较。
+
+- **排序列表不等于堆**：
+  - 每次 `sort()` 可以让结果正确，但复杂度更高，也没有练到堆操作。
+  - 真正的堆训练要使用 `heapq.heappush`、`heapq.heappop`、`heapq.heapreplace`。
+
+### 今天的代码风格提醒
+
+- `import heapq` 应放在文件顶部。
+- 顶层 import 和函数定义之间保留两个空行。
+- 顶层函数之间也保留两个空行。
+- 注释重点写清楚“不变量”，不要把每一行语法都解释一遍。
+
+### 综合评价
+
+今天正式把 Heap 从“会议室资源管理”推进到了 “Top K” 模式。第 60 题完成得很稳，第 61 题的初版虽然结果正确，但暴露了一个重要区别：能用排序列表做出来，不代表掌握了堆。你后面主动修改成 `heapq` 版本，这一步很关键。
+
+目前 Heap 已经覆盖了两个核心方向：
+
+- 动态资源最小值：Meeting Rooms II。
+- Top K 候选维护：Kth Largest / Top K Frequent。
+
+下一次建议继续做 Heap 的第三类经典模式：**多路合并**，例如 `Merge K Sorted Lists` 或数组版本的 `Kth Smallest Element in a Sorted Matrix`。重点练习堆里保存复合状态，例如 `(value, list_index, element_index)`。
+
+---
