@@ -1291,3 +1291,76 @@ return [num for count, num in heap]
 - 不要把“排序列表”误认为堆；每次 `sort()` 虽然能得到正确顺序，但复杂度更高。
 - 堆中可以保存元组，例如 `(frequency, num)`；Python 会先按第一个元素比较。
 - 返回结果顺序如果题目说不限，就不需要额外排序。
+
+## 2026年6月3日: 负数模拟最大堆与 Tuple 状态
+
+### 适用场景
+
+当题目要求找：
+
+- 距离最近的 `k` 个点；
+- 数值最小的 `k` 个元素；
+- 代价最低的 `k` 个候选；
+- 但又需要快速淘汰当前候选中“最大 / 最远 / 最差”的那个元素。
+
+可以维护大小为 `k` 的最大堆。
+
+### Python 中的问题
+
+Python 的 `heapq` 默认是最小堆：
+
+```python
+heap[0]
+```
+
+永远是当前堆里最小的元素。
+
+如果想模拟最大堆，可以把比较值变成负数：
+
+```python
+heapq.heappush(heap, -value)
+```
+
+真实值越大，负数越小，因此会出现在最小堆堆顶。
+
+### K Closest Points 模式
+
+找距离原点最近的 `k` 个点时，堆里保存：
+
+```python
+(-distance_squared, x, y)
+```
+
+含义是：
+
+- `-distance_squared`：用于堆排序。
+- `x`：点的 x 坐标。
+- `y`：点的 y 坐标。
+
+代码骨架：
+
+```python
+import heapq
+
+
+heap = []
+
+for x, y in points:
+    dist = x * x + y * y
+
+    if len(heap) < k:
+        heapq.heappush(heap, (-dist, x, y))
+    elif dist < -heap[0][0]:
+        heapq.heapreplace(heap, (-dist, x, y))
+
+return [[x, y] for _, x, y in heap]
+```
+
+### 关键点
+
+- 最大堆的堆顶表示当前最大元素。
+- 在本题中，堆顶表示当前保留的 `k` 个点里距离最远的点。
+- `heap[0][0]` 是负距离，`-heap[0][0]` 才是真实距离平方。
+- `(-dist, x, y)` 是一个三元组 tuple。
+- Python 比较 tuple 时从左到右比较，通常先看第一个元素。
+- `for _, x, y in heap` 是 tuple 解包；`_` 表示这个值不关心。
