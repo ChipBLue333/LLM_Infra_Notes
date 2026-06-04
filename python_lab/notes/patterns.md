@@ -1364,3 +1364,89 @@ return [[x, y] for _, x, y in heap]
 - `(-dist, x, y)` 是一个三元组 tuple。
 - Python 比较 tuple 时从左到右比较，通常先看第一个元素。
 - `for _, x, y in heap` 是 tuple 解包；`_` 表示这个值不关心。
+
+## 2026年6月4日: 最小堆多路合并与提前停止
+
+### 适用场景
+
+当输入包含多条已经有序的序列，需要：
+
+- 合并所有序列；
+- 找所有序列中的第 `k` 小元素；
+- 按顺序持续取出全局最小元素。
+
+可以使用最小堆进行多路合并。
+
+### 核心不变量
+
+堆中只保存每条序列当前还未处理的最小候选。
+
+堆元素通常保存：
+
+```python
+(value, sequence_index, element_index)
+```
+
+- `value`：参与堆排序的当前候选值。
+- `sequence_index`：候选来自哪条序列。
+- `element_index`：候选在该序列中的位置。
+
+每次弹出全局最小候选后，只推进它所属的序列。其他序列的当前候选仍然有效。
+
+### 完整多路合并
+
+```python
+heap = []
+result = []
+
+for sequence_index, sequence in enumerate(sequences):
+    if sequence:
+        heapq.heappush(heap, (sequence[0], sequence_index, 0))
+
+while heap:
+    value, sequence_index, element_index = heapq.heappop(heap)
+    result.append(value)
+
+    next_index = element_index + 1
+    if next_index < len(sequences[sequence_index]):
+        next_value = sequences[sequence_index][next_index]
+        heapq.heappush(heap, (next_value, sequence_index, next_index))
+```
+
+设所有元素总数为 `N`，序列数量为 `m`：
+
+- Time: `O(N log m)`
+- Space: `O(m)`，不计算返回结果
+
+### 第 K 小：提前停止
+
+如果只需要第 `k` 小元素，不需要生成完整合并结果：
+
+```text
+初始化候选堆
+弹出并推进 k - 1 次
+返回下一次弹出的值
+```
+
+这样只处理前 `k` 个元素，工作量由完整合并的 `N` 降低到 `k`。
+
+### 矩阵题中的额外优化
+
+对于行和列都按非递减顺序排列的 `n x n` 矩阵：
+
+- 可以把每一行视为一条有序序列。
+- 查找第 `k` 小时，只需要初始化前 `min(k, n)` 行。
+- 原因是第一列也有序，第 `k` 行之后的首元素不可能成为严格更早的候选。
+
+该优化依赖列有序。如果只有每行有序，就必须初始化所有行。
+
+复杂度：
+
+- Time: `O(k log(min(k, n)))`
+- Space: `O(min(k, n))`
+
+### 关键辨析
+
+- 序列是否等长不是多路合并的核心要求。
+- 核心要求是每条序列内部有序。
+- 完整合并和第 `k` 小使用相同推进方式，主要区别是停止条件。
