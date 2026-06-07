@@ -1342,3 +1342,104 @@ def get_end(x):
 下一次建议进入第 067 题，继续巩固 Heap，或者开始阶段性复习 060-066，把 Top K、K-Way Merge、双堆三个模式做一次对比总结。
 
 ---
+
+## 2026年6月7日 训练总结
+
+### 今天完成的题目
+
+1. **Problem 067: Number of Connected Components (无向图连通分量数量)**
+   - **类型**: Union Find / Graph
+   - **收获记录 / 踩坑反思**:
+     - 正确从图遍历问题切换到集合合并问题。
+     - 正确初始化 `parent = list(range(n))` 和 `count = n`。
+     - 正确实现 `find(x)`，通过父节点一路找到集合根节点。
+     - 正确在 `union(x, y)` 中调用 `find`，判断两个节点是否已经属于同一集合。
+     - 正确只在两个不同集合成功合并时执行 `count -= 1`。
+     - 正确处理重复边和自环，它们不会让连通分量数量错误减少。
+     - 可见测试和随机 DFS 对照测试全部通过。
+
+### 今天重点理解的问题
+
+- **这题是什么类型的问题**：
+  - 这是图论中的连通分量问题。
+  - 训练重点不是 DFS / BFS，而是 Union Find / 并查集。
+  - 核心视角是：边把两个集合合并，最终看还有多少个集合。
+
+- **Heap 阶段是否结束**：
+  - Heap 的集中训练已经基本结束。
+  - 已覆盖 Top K、固定大小堆、最大堆模拟、K-way merge、双堆、二维候选空间推进。
+  - 从第 067 题开始，训练进入 Union Find / 图结构进阶模式。
+
+- **`find(x)` 是否真的被使用**：
+  - `find` 没有在主循环中直接调用，而是在 `union` 内部被调用。
+  - 调用链是：遍历边 -> `union(a, b)` -> `find(a)` 和 `find(b)`。
+  - 这种结构更清楚：`find` 负责找根，`union` 负责合并，主循环负责维护答案。
+
+### 今天新增掌握的模式
+
+- **Union Find / 并查集**
+  - `parent[x]` 表示节点 `x` 的父节点。
+  - `find(x)` 找到节点所属集合的根节点。
+  - `union(a, b)` 合并两个节点所在集合。
+  - `count` 记录当前连通分量数量。
+  - 只有两个根节点不同，才说明发生了真正合并。
+
+- **路径压缩**
+  - 在 `find` 过程中更新 `parent[x]`，让节点更快接近根节点。
+  - 这样后续查询会更快。
+  - 当前实现使用了路径压缩，但还没有加入 rank / size 优化。
+
+### 今天完成的项目整理
+
+- 将 `problems/` 下的题目按训练专题真实分类，不再只放在一个扁平目录中。
+- 当前专题目录包括：
+  - `01_array_hash_map_basics`
+  - `02_stack`
+  - `03_two_pointers_sliding_window_binary_search`
+  - `04_linked_list`
+  - `05_binary_tree`
+  - `06_backtracking`
+  - `07_graph_bfs_dfs`
+  - `08_dynamic_programming_basic_grid`
+  - `09_dynamic_programming_knapsack_string`
+  - `10_greedy_intervals`
+  - `11_heap`
+  - `12_union_find`
+- 更新了 `scripts/run_all_tests.py`，让它递归扫描专题子目录。
+- 更新了 `README.md` 和 `CODING_COACH_SKILL.md`，以后新题会按专题目录创建。
+- 新增 `problems/README.md`，作为题库专题目录说明。
+
+### 今天的代码风格提醒
+
+- 内部函数也可以加类型标注，例如 `find(x: int) -> int`。
+- `union` 可以返回 `bool`，清楚表达是否真正合并成功。
+- 清理多余空行和行尾空格，让代码更接近工程风格。
+- 注释重点写“不变量”和“状态含义”，不要只解释语法。
+
+### 明天准备
+
+下一次建议继续 Union Find，做一道更接近 Hot 100 图论维度的题。
+
+可选方向：
+
+1. **Redundant Connection**
+   - 继续练 Union Find。
+   - 重点是找到第一条让两个已连通节点再次相连的边。
+
+2. **Number of Provinces**
+   - 继续练连通分量。
+   - 输入从边列表变成邻接矩阵。
+
+3. **Course Schedule**
+   - 切入 Topological Sort。
+   - 从并查集过渡到有向图依赖关系。
+
+建议优先做 **Redundant Connection**，因为它和今天的 `067` 模式最接近，可以稳固 `find / union` 的使用。
+
+### 综合评价
+
+今天完成了从 Heap 专题到 Union Find 专题的切换。第 067 题的实现是正确的，说明你已经理解了并查集最核心的职责拆分：`find` 找根，`union` 合并，主逻辑根据合并结果维护答案。
+
+今天还有一个重要动作是整理题库结构。现在题目不只是按题号排列，也按训练内容分类，后续复习会更直接。接下来要做的是继续在 Union Find 上做 1 到 2 题，把这个模式从“能看懂”推进到“能稳定写出”。
+
+---

@@ -10,7 +10,7 @@ def main():
         print("No problems directory found.")
         return
 
-    files = sorted(PROBLEMS_DIR.glob("*.py"))
+    files = sorted(PROBLEMS_DIR.rglob("*.py"))
 
     if not files:
         print("No problem files found.")
@@ -20,7 +20,7 @@ def main():
     failed = 0
 
     for file in files:
-        print(f"Running {file.name}...")
+        print(f"Running {file.relative_to(PROBLEMS_DIR)}...")
         result = subprocess.run(
             ["python3", str(file)],
             capture_output=True,
@@ -28,10 +28,10 @@ def main():
         )
 
         if result.returncode == 0:
-            print(f"[PASS] {file.name}")
+            print(f"[PASS] {file.relative_to(PROBLEMS_DIR)}")
             passed += 1
         else:
-            print(f"[FAIL] {file.name}")
+            print(f"[FAIL] {file.relative_to(PROBLEMS_DIR)}")
             print(result.stdout)
             print(result.stderr)
             failed += 1

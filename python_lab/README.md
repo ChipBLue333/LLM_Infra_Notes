@@ -49,13 +49,16 @@ AI 可以提示思路，但提示应该分层提供：
 
 ### 2. 每道题必须创建独立 `.py` 文件
 
-每道题应该放在 `problems/` 目录下，例如：
+每道题应该放在 `problems/` 的专题子目录下，例如：
 
 ```bash
 problems/
-  001_two_sum.py
-  002_valid_parentheses.py
-  003_merge_intervals.py
+  01_array_hash_map_basics/
+    001_two_sum.py
+  02_stack/
+    002_valid_parentheses.py
+  10_greedy_intervals/
+    057_merge_intervals.py
 ```
 
 每个文件应该包含：
@@ -79,8 +82,18 @@ coding-practice-ai-coach/
   README.md
   CODING_COACH_SKILL.md
   problems/
-    001_xxx.py
-    002_xxx.py
+    01_array_hash_map_basics/
+    02_stack/
+    03_two_pointers_sliding_window_binary_search/
+    04_linked_list/
+    05_binary_tree/
+    06_backtracking/
+    07_graph_bfs_dfs/
+    08_dynamic_programming_basic_grid/
+    09_dynamic_programming_knapsack_string/
+    10_greedy_intervals/
+    11_heap/
+    12_union_find/
   notes/
     mistakes.md
     patterns.md

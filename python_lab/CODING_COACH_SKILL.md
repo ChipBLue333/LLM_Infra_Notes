@@ -68,7 +68,32 @@
 
 ## 出题规则
 
-每次出题时，创建一个新的 `.py` 文件，放在 `problems/` 目录下。
+每次出题时，创建一个新的 `.py` 文件，放在 `problems/` 下对应的专题子目录中。
+
+当前专题目录：
+
+```text
+problems/
+  01_array_hash_map_basics/
+  02_stack/
+  03_two_pointers_sliding_window_binary_search/
+  04_linked_list/
+  05_binary_tree/
+  06_backtracking/
+  07_graph_bfs_dfs/
+  08_dynamic_programming_basic_grid/
+  09_dynamic_programming_knapsack_string/
+  10_greedy_intervals/
+  11_heap/
+  12_union_find/
+```
+
+如果新题属于新专题，可以创建新的编号专题目录，例如：
+
+```text
+problems/13_topological_sort/
+problems/14_trie/
+```
 
 **注意：所有的题目描述、输入输出说明、示例和约束条件必须使用中文。**
 
@@ -81,9 +106,9 @@
 例如：
 
 ```text
-001_two_sum.py
-002_valid_parentheses.py
-003_merge_sorted_array.py
+problems/01_array_hash_map_basics/001_two_sum.py
+problems/02_stack/002_valid_parentheses.py
+problems/01_array_hash_map_basics/003_merge_sorted_array.py
 ```
 
 ---
@@ -386,6 +411,18 @@ left / right 更新顺序错误，导致窗口长度计算不对。
 
 ```bash
 problems/
+problems/01_array_hash_map_basics/
+problems/02_stack/
+problems/03_two_pointers_sliding_window_binary_search/
+problems/04_linked_list/
+problems/05_binary_tree/
+problems/06_backtracking/
+problems/07_graph_bfs_dfs/
+problems/08_dynamic_programming_basic_grid/
+problems/09_dynamic_programming_knapsack_string/
+problems/10_greedy_intervals/
+problems/11_heap/
+problems/12_union_find/
 notes/
 templates/
 scripts/
@@ -471,7 +508,7 @@ def main():
         print("No problems directory found.")
         return
 
-    files = sorted(PROBLEMS_DIR.glob("*.py"))
+    files = sorted(PROBLEMS_DIR.rglob("*.py"))
 
     if not files:
         print("No problem files found.")
@@ -481,7 +518,7 @@ def main():
     failed = 0
 
     for file in files:
-        print(f"Running {file.name}...")
+        print(f"Running {file.relative_to(PROBLEMS_DIR)}...")
         result = subprocess.run(
             ["python3", str(file)],
             capture_output=True,
@@ -489,10 +526,10 @@ def main():
         )
 
         if result.returncode == 0:
-            print(f"[PASS] {file.name}")
+            print(f"[PASS] {file.relative_to(PROBLEMS_DIR)}")
             passed += 1
         else:
-            print(f"[FAIL] {file.name}")
+            print(f"[FAIL] {file.relative_to(PROBLEMS_DIR)}")
             print(result.stdout)
             print(result.stderr)
             failed += 1
@@ -512,7 +549,7 @@ if __name__ == "__main__":
 项目初始化完成后，你应该创建第一道题：
 
 ```text
-problems/001_count_frequencies.py
+problems/01_array_hash_map_basics/001_count_frequencies.py
 ```
 
 主题：
