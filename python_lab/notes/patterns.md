@@ -1692,3 +1692,82 @@ root_b = find(b)
 
 - 时间：近似 `O(n + e)`
 - 空间：`O(n)`
+
+## Union Find: 无向图判环与树判定
+
+### 适用场景
+
+当题目给出无向图边列表，并要求判断是否成环、是否是一棵树、或者找出造成环的边时，可以优先考虑并查集。
+
+典型问题：
+
+- Graph Valid Tree；
+- Redundant Connection；
+- 无向图动态加边判环；
+- 判断新增边是否连接了两个已经连通的节点。
+
+### 核心判断
+
+对于一条边 `[a, b]`：
+
+```python
+root_a = find(a)
+root_b = find(b)
+```
+
+- 如果 `root_a != root_b`，说明 `a` 和 `b` 原本不连通，这条边可以合并两个集合。
+- 如果 `root_a == root_b`，说明 `a` 和 `b` 已经连通，再加这条边会形成环。
+
+### 判断无向图是否为树
+
+一棵包含 `n` 个节点的无向树必须满足：
+
+```text
+边数 == n - 1
+没有环
+```
+
+常用结构：
+
+```python
+if len(edges) != n - 1:
+    return False
+
+parent = list(range(n))
+
+for a, b in edges:
+    if not union(a, b):
+        return False
+
+return True
+```
+
+这里边数正确加上没有环，已经足够推出图连通。
+
+### 找冗余连接
+
+如果题目要求返回造成环的那条边，可以按输入顺序处理：
+
+```python
+for a, b in edges:
+    if not union(a, b):
+        return [a, b]
+```
+
+`union` 返回 `False` 的含义是：这两个节点已经属于同一个集合，当前边是多余边。
+
+### 关键辨析
+
+- 环不是重复边。
+- 重复边是完全相同的边再次出现。
+- 环是两个已经连通的节点之间又出现一条边。
+- 判断连通性要比较根节点：`find(a) == find(b)`。
+- 对于节点编号从 `1` 开始的题，`parent` 通常写成 `list(range(n + 1))`。
+
+### 复杂度
+
+带路径压缩时：
+
+- 单次 `find` / `union` 均摊近似 O(1)
+- 总时间：`O(e * α(n))`
+- 空间：`O(n)`
