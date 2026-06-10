@@ -1771,3 +1771,100 @@ for a, b in edges:
 - 单次 `find` / `union` 均摊近似 O(1)
 - 总时间：`O(e * α(n))`
 - 空间：`O(n)`
+
+## 2026年6月10日: Topological Sort / Kahn Algorithm
+
+### 适用场景
+
+当题目给出一组有向依赖关系，并要求判断是否能完成、返回一种合法顺序、或者检测有向图中是否存在环时，可以考虑拓扑排序。
+
+典型问题：
+
+- Course Schedule；
+- Course Schedule II；
+- Alien Dictionary；
+- 任务调度；
+- 有向依赖关系排序。
+
+### 核心思想
+
+拓扑排序要解决的是：对于每条有向边 `a -> b`，结果中 `a` 必须出现在 `b` 前面。
+
+Kahn 算法的核心是入度：
+
+- 入度表示一个节点还有多少个未处理的前置依赖。
+- 入度为 `0` 的节点当前可以被处理。
+- 处理完一个节点后，它指向的后继节点少了一个前置依赖，所以后继节点入度减 1。
+- 如果某个后继节点入度变成 `0`，它也可以进入队列。
+
+### 代码骨架
+
+```python
+from collections import deque
+
+
+graph = [[] for _ in range(num_nodes)]
+indegree = [0] * num_nodes
+
+for node, prereq in dependencies:
+    graph[prereq].append(node)
+    indegree[node] += 1
+
+queue = deque([i for i in range(num_nodes) if indegree[i] == 0])
+order = []
+
+while queue:
+    current = queue.popleft()
+    order.append(current)
+
+    for neighbor in graph[current]:
+        indegree[neighbor] -= 1
+        if indegree[neighbor] == 0:
+            queue.append(neighbor)
+
+if len(order) == num_nodes:
+    return order
+return []
+```
+
+### 判断能否完成
+
+如果题目只要求返回 `True / False`，不需要保存完整顺序，只需要统计处理过的节点数量：
+
+```python
+processed = 0
+
+while queue:
+    current = queue.popleft()
+    processed += 1
+    ...
+
+return processed == num_nodes
+```
+
+### 返回合法顺序
+
+如果题目要求返回具体顺序，就保存 `order`：
+
+```python
+order.append(current)
+```
+
+最后：
+
+```python
+return order if len(order) == num_nodes else []
+```
+
+### 关键辨析
+
+- 有向依赖题最重要的是先确定边方向。
+- 课程表里 `[course, prereq]` 表示 `prereq -> course`。
+- 拓扑排序结果可能不唯一。
+- 测试返回顺序时，应验证依赖关系是否满足，而不是只比较某一个固定数组。
+- 如果最后没有处理完全部节点，说明剩余节点在环里互相等待。
+
+### 复杂度
+
+- 时间：`O(V + E)`，其中 `V` 是节点数，`E` 是边数。
+- 空间：`O(V + E)`，主要来自邻接表、入度数组和队列。
