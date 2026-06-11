@@ -1868,3 +1868,130 @@ return order if len(order) == num_nodes else []
 
 - 时间：`O(V + E)`，其中 `V` 是节点数，`E` 是边数。
 - 空间：`O(V + E)`，主要来自邻接表、入度数组和队列。
+
+## 2026年6月11日: Alien Dictionary / 字符依赖建图
+
+### 适用场景
+
+当题目给出一组已经按某种未知字典序排好的字符串，并要求推断字符之间的顺序时，可以把字符看成节点，把“某字符必须排在另一个字符前面”看成有向边。
+
+典型问题：
+
+- Alien Dictionary；
+- 从排序字符串中恢复字符顺序；
+- 从局部有序样本中推导全局依赖关系。
+
+### 核心思想
+
+字典序比较只由第一处不同字符决定。
+
+例如：
+
+```text
+"wrt"
+"wrf"
+```
+
+前两个字符都相同，第一处不同是：
+
+```text
+t != f
+```
+
+因此可以推出：
+
+```text
+t -> f
+```
+
+意思是 `t` 必须排在 `f` 前面。后面的字符不能再提供新的顺序信息。
+
+### 代码骨架
+
+```python
+from collections import deque
+
+
+chars = set("".join(words))
+graph = {char: set() for char in chars}
+indegree = {char: 0 for char in chars}
+
+for first_word, second_word in zip(words, words[1:]):
+    min_len = min(len(first_word), len(second_word))
+
+    if (
+        len(first_word) > len(second_word)
+        and first_word[:min_len] == second_word[:min_len]
+    ):
+        return ""
+
+    for i in range(min_len):
+        if first_word[i] != second_word[i]:
+            first_char = first_word[i]
+            second_char = second_word[i]
+
+            if second_char not in graph[first_char]:
+                graph[first_char].add(second_char)
+                indegree[second_char] += 1
+
+            break
+
+queue = deque([char for char in chars if indegree[char] == 0])
+order = []
+
+while queue:
+    char = queue.popleft()
+    order.append(char)
+
+    for neighbor in graph[char]:
+        indegree[neighbor] -= 1
+        if indegree[neighbor] == 0:
+            queue.append(neighbor)
+
+return "".join(order) if len(order) == len(chars) else ""
+```
+
+### 前缀非法
+
+如果前面的单词更长，并且后面的单词是它的前缀，则输入非法：
+
+```text
+["abc", "ab"]
+```
+
+原因是如果前缀完全相同，短单词应该排在长单词前面。
+
+这类情况需要在建边阶段单独判断，不能只依赖最后的环检测。
+
+### 重复边去重
+
+邻接表建议用 `set`：
+
+```python
+graph = {char: set() for char in chars}
+```
+
+只有当边第一次出现时才增加入度：
+
+```python
+if second_char not in graph[first_char]:
+    graph[first_char].add(second_char)
+    indegree[second_char] += 1
+```
+
+否则同一条依赖被重复统计，会导致入度错误，拓扑排序可能误判。
+
+### 关键辨析
+
+- 比较相邻单词即可，不需要比较所有单词对。
+- 每对相邻单词只根据第一处不同字符建一条边。
+- 所有出现过的字符都必须进入节点集合，即使它没有任何边。
+- 拓扑排序答案可能不唯一。
+- 如果题目要求字典序最小的合法答案，可以用最小堆替代普通队列。
+
+### 复杂度
+
+设 `C` 是所有单词字符总数，`V` 是不同字符数量，`E` 是依赖边数量：
+
+- 时间：`O(C + V + E)`
+- 空间：`O(V + E)`
