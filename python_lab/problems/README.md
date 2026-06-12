@@ -17,6 +17,7 @@
 - `11_heap/`: 堆、Top K、K-way merge、双堆
 - `12_union_find/`: 并查集
 - `13_topological_sort/`: 拓扑排序、课程依赖
+- `14_trie/`: Trie、前缀树、字符串前缀查询
 
 ## 复习方式
 

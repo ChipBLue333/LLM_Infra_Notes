@@ -1995,3 +1995,130 @@ if second_char not in graph[first_char]:
 
 - 时间：`O(C + V + E)`
 - 空间：`O(V + E)`
+
+## 2026年6月12日: Trie / 前缀树
+
+### 适用场景
+
+当题目需要高效处理字符串集合中的前缀关系时，可以考虑 Trie。
+
+典型问题：
+
+- 判断一个完整单词是否存在；
+- 判断是否存在某个前缀；
+- 自动补全；
+- 单词搜索；
+- 带通配符的字符串匹配。
+
+### 核心思想
+
+Trie 是一棵按字符分叉的树。每条从根节点向下的路径代表一个字符串前缀。
+
+每个节点通常保存两个字段：
+
+```python
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_word = False
+```
+
+- `children`：字符到子节点的映射。
+- `is_word`：从根节点到当前节点是否刚好构成完整单词。
+
+节点本身不一定需要保存当前字符，因为字符已经作为父节点 `children` 字典里的 key 存在。
+
+### 代码骨架
+
+```python
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_word = False
+
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.is_word = True
+
+    def search(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                return False
+            node = node.children[char]
+        return node.is_word
+
+    def starts_with(self, prefix):
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return False
+            node = node.children[char]
+        return True
+```
+
+### search 和 starts_with 的区别
+
+插入 `"apple"` 后：
+
+```text
+root -> a -> p -> p -> l -> e
+```
+
+此时：
+
+```python
+starts_with("app") == True
+search("app") == False
+```
+
+原因是 `"app"` 这条路径存在，但第三个节点没有被标记为完整单词结尾。
+
+只有执行 `insert("app")` 后：
+
+```python
+search("app") == True
+```
+
+### 可选重构
+
+`search` 和 `starts_with` 都需要沿字符串向下走，可以抽一个辅助方法：
+
+```python
+def _find_node(self, text):
+    node = self.root
+    for char in text:
+        if char not in node.children:
+            return None
+        node = node.children[char]
+    return node
+```
+
+然后：
+
+```python
+def search(self, word):
+    node = self._find_node(word)
+    return node is not None and node.is_word
+
+def starts_with(self, prefix):
+    return self._find_node(prefix) is not None
+```
+
+### 复杂度
+
+设 `L` 是输入字符串长度：
+
+- 插入：`O(L)`
+- 查询完整单词：`O(L)`
+- 查询前缀：`O(L)`
+- 空间：最坏情况下每个新字符都创建一个新节点，总空间与所有插入单词的字符总数相关。
