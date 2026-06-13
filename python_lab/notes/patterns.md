@@ -2122,3 +2122,69 @@ def starts_with(self, prefix):
 - 查询完整单词：`O(L)`
 - 查询前缀：`O(L)`
 - 空间：最坏情况下每个新字符都创建一个新节点，总空间与所有插入单词的字符总数相关。
+
+## 2026年6月13日: Trie + DFS 通配符搜索
+
+### 适用场景
+
+当字符串集合已经存入 Trie，并且搜索模式中包含通配符，例如 `"."` 可以匹配任意一个字符。
+
+典型题目：
+
+- Add and Search Word / Word Dictionary
+- 支持单字符 wildcard 的字典查询
+- Trie 上的不确定路径搜索
+
+### 核心思想
+
+- 普通字符：路径是确定的，只需要检查当前节点是否存在对应子节点。
+- 通配符 `"."`：路径不确定，需要尝试当前节点的所有子节点。
+- 只要任意一个子分支能匹配成功，当前搜索就成功。
+- 搜索走到字符串末尾时，必须检查 `node.is_word`，确认匹配到的是完整单词。
+
+### 递归状态
+
+```python
+dfs(index, node)
+```
+
+- `index`：当前正在匹配 `word[index]`。
+- `node`：当前位于 Trie 的哪个节点。
+
+### 代码骨架
+
+```python
+def search(self, word):
+    def dfs(index, node):
+        if index == len(word):
+            return node.is_word
+
+        char = word[index]
+
+        if char != ".":
+            if char not in node.children:
+                return False
+            return dfs(index + 1, node.children[char])
+
+        for child in node.children.values():
+            if dfs(index + 1, child):
+                return True
+        return False
+
+    return dfs(0, self.root)
+```
+
+### 易错点
+
+- 把 `"."` 理解成任意长度匹配。这里它只能匹配一个字符。
+- 遇到 `"."` 后忘记尝试所有子节点，只随便走一个分支。
+- 走到搜索字符串末尾后直接返回 `True`，导致把前缀误判成完整单词。
+- 忘记在 `add_word` 的最后设置 `node.is_word = True`。
+
+### 复杂度
+
+设 `L` 是搜索字符串长度，`B` 是字符分支数量。
+
+- 没有通配符时：Time O(L)。
+- 存在多个通配符时：最坏情况可能探索多条 Trie 分支，时间复杂度与被展开的节点数量相关。
+- 空间复杂度：递归调用栈 O(L)。
