@@ -67,7 +67,16 @@ Task:
 
 
 std::vector<int> two_sum(const std::vector<int>& nums, int target) {
-    // TODO: 使用一次遍历和 std::unordered_map 完成实现
+    // 使用map记录已经遍历过的数字及其下标
+    std::unordered_map<int, int> num_to_index;
+    for (int i = 0; i < nums.size(); ++i) {
+        int complement = target - nums[i];  // 计算 complement
+        auto it = num_to_index.find(complement);
+        if (it != num_to_index.end()) {
+            return {it->second, i};
+        }
+        num_to_index[nums[i]] = i;
+    }
     return {};
 }
 
